@@ -404,4 +404,71 @@ compose2(const Operation1& op1, const Operation2& op2, const Operation3& op3)
 	return binary_compose<Operation1, Operation2, Operation3>(op1, op2, op3);
 }
 
+template <typename Arg, typename Result>
+class pointer_to_unary_function : public unary_function<Arg, Result>
+{
+protected:
+	Result (*ptr)(Arg);
+public:
+	pointer_to_unary_function() {}
+	explicit pointer_to_unary_function(Result (*x)(Arg)) : ptr(x) {}
+	Result operator()(Arg x) const { return ptr(x); }
+};
+
+template <typename Arg, typename Result>
+inline pointer_to_unary_function<Arg, Result>
+ptr_fun(Result (*x)(Arg))
+{
+	return pointer_to_unary_function<Arg, Result>(x);
+}
+
+template <typename Arg1, typename Arg2, typename Result>
+class pointer_to_binary_function
+	: public binary_function<Arg1, Arg2, Result>
+{
+protected:
+	Result (*ptr)(Arg1, Arg2);
+public:
+	pointer_to_binary_function() {}
+	explicit pointer_to_binary_function(Result (*x)(Arg1, Arg2)) : ptr(x) {}
+	Result operator()(Arg1 x, Arg2 y) const { return ptr(x, y); }
+};
+
+template <typename Arg1, typename Arg2, typename Result>
+inline pointer_to_binary_function<Arg1, Arg2, Result>
+ptr_fun(Result (*x)(Arg1, Arg2))
+{
+	return pointer_to_binary_function<Arg1, Arg2, Result>(x);
+}
+
+template <class S, class T>
+class mem_fun_t : public unary_function<T*, S>
+{
+public:
+	explicit mem_fun_t(S (T::*pf)()) : f(pf) {}
+	S operator()(T* p) const { return (p->*f)(); }
+private:
+	S (T::*f)();
+};
+
+template <typename S, typename T>
+class const_mem_fun_t : public unary_function<const T*, S>
+{
+public:
+	explicit const_mem_fun_t(S (T::*pf)() const) : f(pf) {}
+	S operator() (const T* p) const { return (p->*f)(); }
+private:
+	S (T::*f)() const;
+};
+
+template <typename S, typename T>
+class mem_fun_t : public unary_function<T, S>
+{
+public:
+	explicit mem_fun_t(S (T::*pf)()) : f(pf) {}
+	S operator()(T& r) const { return (r.*f)(); }
+private:
+	S (T::*f)();
+};
+
 #endif
